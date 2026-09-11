@@ -1,6 +1,7 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Home, Upload, Database, Layers, Settings, FileSearch, UserCircle2, Sparkles, LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme, type Theme } from '../contexts/ThemeContext';
 
 const navItems = [
   { label: 'Dashboard', path: '/dashboard', icon: Home },
@@ -17,6 +18,7 @@ const AppShell = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
 
   const handleSignOut = () => {
     logout();
@@ -106,6 +108,17 @@ const AppShell = () => {
                 <h1 className="mt-2 text-2xl font-semibold text-white">Your ETL command center</h1>
               </div>
               <div className="flex flex-wrap items-center gap-3">
+                <label className="sr-only" htmlFor="theme-select">Color theme</label>
+                <select
+                  id="theme-select"
+                  value={theme}
+                  onChange={(event) => setTheme(event.target.value as Theme)}
+                  className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200 outline-none transition focus:border-cyan-400"
+                >
+                  <option value="dark">Dark</option>
+                  <option value="white">White</option>
+                  <option value="blue">Light blue</option>
+                </select>
                 <button className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200 transition hover:bg-white/10">
                   Notifications
                 </button>

@@ -42,7 +42,7 @@ const DashboardPage = () => {
 
         <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
           <div className="rounded-[32px] border border-white/10 bg-slate-900/80 p-8 shadow-2xl">
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-6 sm:grid-cols-2">
               <div className="rounded-[28px] border border-white/10 bg-slate-950/70 p-6">
                 <p className="text-sm text-slate-400">Active imports</p>
                 <p className="mt-4 text-4xl font-semibold text-white">24</p>
@@ -92,17 +92,17 @@ const DashboardPage = () => {
                 )}
               </div>
 
-              <div className="mt-6 grid gap-4 sm:grid-cols-3">
-                <div className="rounded-[24px] border border-white/10 bg-slate-950/70 p-5">
+              <div className="mt-6 grid min-w-0 gap-4 sm:grid-cols-3">
+                <div className="min-w-0 rounded-[24px] border border-white/10 bg-slate-950/70 p-4 text-center sm:p-5">
                   <p className="text-sm text-slate-400">Rows</p>
                   <p className="mt-3 text-3xl font-semibold text-white">{latestImport?.totalRows ?? '—'}</p>
                 </div>
-                <div className="rounded-[24px] border border-white/10 bg-slate-950/70 p-5">
+                <div className="min-w-0 rounded-[24px] border border-white/10 bg-slate-950/70 p-4 text-center sm:p-5">
                   <p className="text-sm text-slate-400">Failed rows</p>
                   <p className="mt-3 text-3xl font-semibold text-white">{latestImport?.failedRows ?? '—'}</p>
                 </div>
-                <div className="rounded-[24px] border border-white/10 bg-slate-950/70 p-5">
-                  <p className="text-sm text-slate-400">Transformed</p>
+                <div className="min-w-0 rounded-[24px] border border-white/10 bg-slate-950/70 p-4 text-center sm:p-5">
+                  <p className="text-xs leading-4 text-slate-400 sm:text-sm">Transformed</p>
                   <p className="mt-3 text-3xl font-semibold text-white">{latestImport?.transformedAt ? 'Yes' : 'No'}</p>
                 </div>
               </div>

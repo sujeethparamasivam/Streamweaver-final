@@ -77,9 +77,14 @@ const UploadPage = () => {
       setAvailableColumns(columns);
       setSelectedColumns(columns);
       setProgress(100);
+      setLoading(false);
 
-      const profileResponse = await api.get('/profiling', { params: { uploadId: id } });
-      setProfile(profileResponse.data.profile);
+      try {
+        const profileResponse = await api.get('/profiling', { params: { uploadId: id } });
+        setProfile(profileResponse.data.profile);
+      } catch (profileError) {
+        console.warn('Upload profiling unavailable:', profileError);
+      }
     } catch (err: any) {
       const errorMsg = err?.response?.data?.message || err?.message || 'Upload failed. Please try again.';
       console.error('Upload page error:', err);

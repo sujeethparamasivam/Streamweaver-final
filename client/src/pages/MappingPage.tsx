@@ -326,8 +326,10 @@ const MappingPage = () => {
           : 'Transformation complete. Preview is ready.'
       );
       navigate(`/preview?uploadId=${uploadId}`);
-    } catch {
-      setError('Unable to run transformation.');
+    } catch (err: any) {
+      const errorMsg = err?.response?.data?.message || err?.message || 'Unable to run transformation. Please check your mapping and try again.';
+      console.error('Transform error:', err);
+      setError(errorMsg);
     } finally {
       setSaving(false);
     }

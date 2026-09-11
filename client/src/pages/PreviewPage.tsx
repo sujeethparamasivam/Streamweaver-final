@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { FixedSizeList as List } from 'react-window';
 import api from '../services/api';
 import MemoryAudit from '../components/MemoryAudit';
+import { onImportProgress } from '../services/socket';
 
 const PreviewPage = () => {
   const [searchParams] = useSearchParams();
@@ -11,6 +12,9 @@ const PreviewPage = () => {
   const [rows, setRows] = useState<Array<{ transformedData?: Record<string, unknown> }>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState(0);
+  const [importMessage, setImportMessage] = useState('');
 
   useEffect(() => {
     const uploadId = searchParams.get('uploadId')?.trim() ?? '';
@@ -35,6 +39,40 @@ const PreviewPage = () => {
 
     void loadPreview();
   }, [searchParams]);
+
+  // Subscribe to import progress updates
+  useEffect(() => {
+    const unsubscribe = onImportProgress((payload) => {
+      if (payload.uploadId !== uploadId) return;
+      if (payload.stage === 'import') {
+        setImportProgress(payload.progress ?? 0);
+      }
+    });
+    return unsubscribe;
+  }, [uploadId]);
+
+  const handleImport = async () => {
+    if (!uploadId) {
+      setError('Cannot import without a selected dataset.');
+      return;
+    }
+
+    setImporting(true);
+    setError('');
+    setImportMessage('Starting import...');
+    setImportProgress(0);
+
+    try {
+      const response = await api.post(`/imports/${uploadId}/import`);
+      setImportMessage(`✓ Import complete! ${response.data.importedRows} rows imported.`);
+      setImportProgress(100);
+    } catch (err: any) {
+      const errorMsg = err?.response?.data?.message || err?.message || 'Import failed. Please try again.';
+      setError(errorMsg);
+    } finally {
+      setImporting(false);
+    }
+  };
 
   const columns = useMemo(() => (rows.length ? Object.keys(rows[0].transformedData ?? {}) : []), [rows]);
 
@@ -77,6 +115,26 @@ const PreviewPage = () => {
             >
               ✓ Validate Dataset & View Errors
             </button>
+            <button
+              type="button"
+              onClick={handleImport}
+              disabled={!uploadId || importing}
+              className="sm:col-span-2 rounded-full border-2 border-emerald-400 bg-gradient-to-r from-emerald-600 to-teal-600 px-8 py-3 text-sm font-semibold text-white transition hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-emerald-500/50"
+            >
+              {importing ? (
+                <>
+                  <span className="inline-flex animate-spin mr-2">⟳</span>
+                  Importing... ({importProgress}%)
+                </>
+              ) : (
+                '→ Import to Database'
+              )}
+            </button>
+            {importMessage && (
+              <div className="sm:col-span-2 rounded-full border border-emerald-400/50 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+                {importMessage}
+              </div>
+            )}
             {uploadId && (
               <div className="sm:col-span-2 mt-2">
                 <MemoryAudit uploadId={uploadId} />

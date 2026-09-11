@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { onImportProgress } from '../services/socket';
 
 interface DatasetProfile {
   totalRows: number;
@@ -26,6 +27,9 @@ const ValidationPage = () => {
   const [datasetName, setDatasetName] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState(0);
+  const [importMessage, setImportMessage] = useState('');
   const [summary, setSummary] = useState<{ totalRecords: number; totalErrors: number; totalWarnings: number }>({ totalRecords: 0, totalErrors: 0, totalWarnings: 0 });
   const [pagination, setPagination] = useState<{ page: number; limit: number; totalRecords: number; totalPages: number }>({ page: 1, limit: 500, totalRecords: 0, totalPages: 0 });
   const pageSizeOptions = [200, 500, 1000];
@@ -110,6 +114,40 @@ const ValidationPage = () => {
     void loadValidations(1, newLimit, uploadId);
   };
 
+  // Subscribe to import progress updates
+  useEffect(() => {
+    const unsubscribe = onImportProgress((payload) => {
+      if (payload.uploadId !== uploadId) return;
+      if (payload.stage === 'import') {
+        setImportProgress(payload.progress ?? 0);
+      }
+    });
+    return unsubscribe;
+  }, [uploadId]);
+
+  const handleImport = async () => {
+    if (!uploadId) {
+      setError('Cannot import without a selected dataset.');
+      return;
+    }
+
+    setImporting(true);
+    setError('');
+    setImportMessage('Starting import...');
+    setImportProgress(0);
+
+    try {
+      const response = await api.post(`/imports/${uploadId}/import`);
+      setImportMessage(`✓ Import complete! ${response.data.importedRows} rows imported.`);
+      setImportProgress(100);
+    } catch (err: any) {
+      const errorMsg = err?.response?.data?.message || err?.message || 'Import failed. Please try again.';
+      setError(errorMsg);
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const handleSelectDataset = (value: string) => {
     if (!value) return;
     navigate(`/validation?uploadId=${value}`);
@@ -152,7 +190,20 @@ const ValidationPage = () => {
           >
             Validate
           </button>
+          <button
+            type="button"
+            onClick={handleImport}
+            disabled={!uploadId || importing}
+            className="rounded-full border border-emerald-400 bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-3 text-sm font-semibold text-white transition hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {importing ? `Importing... (${importProgress}%)` : '→ Import'}
+          </button>
         </div>
+        {importMessage && (
+          <div className="mt-3 rounded-full border border-emerald-400/50 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+            {importMessage}
+          </div>
+        )}
       </div>
 
       {loading && <div className="rounded-[32px] border border-white/10 bg-slate-900/80 p-8 text-slate-300">Loading validations...</div>}

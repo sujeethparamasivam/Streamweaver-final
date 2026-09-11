@@ -13,6 +13,7 @@ import AuditPage from './pages/AuditPage';
 import SettingsPage from './pages/SettingsPage';
 import AppShell from './components/AppShell';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, loading } = useAuth();
@@ -22,25 +23,27 @@ const ProtectedRoute = ({ children }: { children: ReactNode }) => {
 
 const App = () => {
   return (
-    <AuthProvider>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/auth" element={<AuthPage />} />
-        <Route path="/" element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
-          <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="upload" element={<UploadPage />} />
-          <Route path="cleaning" element={<CleaningPage />} />
-          <Route path="preview" element={<PreviewPage />} />
-          <Route path="mapping" element={<MappingPage />} />
-          <Route path="validations" element={<ValidationPage />} />
-          <Route path="validation" element={<ValidationPage />} />
-          <Route path="history" element={<HistoryPage />} />
-          <Route path="audit" element={<AuditPage />} />
-          <Route path="settings" element={<SettingsPage />} />
-        </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/" element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
+            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="upload" element={<UploadPage />} />
+            <Route path="cleaning" element={<CleaningPage />} />
+            <Route path="preview" element={<PreviewPage />} />
+            <Route path="mapping" element={<MappingPage />} />
+            <Route path="validations" element={<ValidationPage />} />
+            <Route path="validation" element={<ValidationPage />} />
+            <Route path="history" element={<HistoryPage />} />
+            <Route path="audit" element={<AuditPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AuthProvider>
+    </ThemeProvider>
   );
 };
 

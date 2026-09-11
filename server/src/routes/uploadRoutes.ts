@@ -25,6 +25,7 @@ const BATCH_SIZE = Number(process.env.UPLOAD_BATCH_SIZE ?? '5000');
 const PREVIEW_LIMIT = 1000;
 const PROGRESS_THROTTLE_MS = Number(process.env.PROGRESS_THROTTLE_MS ?? '300');
 const MAX_JSON_OBJECT_SIZE = 100 * 1024 * 1024; // 100 MB
+const MAX_PERSISTED_VALIDATIONS = Number(process.env.MAX_PERSISTED_VALIDATIONS ?? '10000');
 
 type NumberedRecord = { rowNumber: number; data: Record<string, unknown> };
 
@@ -208,6 +209,7 @@ const validateRow = (row: Record<string, unknown>, uploadId: string, rowNumber: 
 // Validation write buffering to reduce blocking I/O during uploads
 const validationBuffers = new Map<string, any[]>();
 const validationTimers = new Map<string, NodeJS.Timeout>();
+const validationCounts = new Map<string, number>();
 
 async function flushValidationBuffer(uploadId: string) {
   const buf = validationBuffers.get(uploadId) ?? [];
@@ -232,8 +234,12 @@ async function flushValidationBuffer(uploadId: string) {
 
 function scheduleValidationDocs(uploadId: string, docs: any[]) {
   if (!docs || !docs.length) return;
+  const persistedCount = validationCounts.get(uploadId) ?? 0;
+  const remaining = Math.max(0, MAX_PERSISTED_VALIDATIONS - persistedCount);
+  const docsToPersist = docs.slice(0, remaining);
+  validationCounts.set(uploadId, persistedCount + docsToPersist.length);
   const buf = validationBuffers.get(uploadId) ?? [];
-  buf.push(...docs);
+  buf.push(...docsToPersist);
   validationBuffers.set(uploadId, buf);
   if (buf.length >= 500) {
     void flushValidationBuffer(uploadId);
@@ -572,23 +578,26 @@ function scheduleMemorySample(uploadId: string, sample: any) {
 
     const columns = Array.from(detectedColumns);
 
-    // wait for any buffered row writes and validation writes to flush before marking completed
+    // Mark the upload complete as soon as parsing finishes. Database buffers
+    // continue draining without keeping the browser request open.
     try {
-      await flushRowWrites(uploadId);
-      await flushValidationBuffer(uploadId);
-    } catch (e) {
-      // ignore
+      await ImportJob.findByIdAndUpdate(job._id, {
+        status: 'completed',
+        totalRows,
+        failedRows,
+        fileSize,
+        columns,
+        selectedColumns: columns,
+        finishedAt: new Date()
+      });
+    } catch (updateError) {
+      console.error('Unable to finalize upload job:', updateError);
     }
 
-    await ImportJob.findByIdAndUpdate(job._id, {
-      status: 'completed',
-      totalRows,
-      failedRows,
-      fileSize,
-      columns,
-      selectedColumns: columns,
-      finishedAt: new Date()
-    });
+    void Promise.all([
+      flushRowWrites(uploadId),
+      flushValidationBuffer(uploadId)
+    ]).catch((flushError) => console.error('Unable to flush upload buffers:', flushError));
 
     // flush any buffered samples and compute memory audit summary
     try {
@@ -610,7 +619,11 @@ function scheduleMemorySample(uploadId: string, sample: any) {
 
     res.json({ message: 'File processed', fileName, total: totalRows, totalRows, failedRows, preview: firstRecords, columns, uploadId });
   } catch (error) {
-    await ImportJob.findByIdAndUpdate(job._id, { status: 'failed', totalRows, failedRows, finishedAt: new Date() });
+    try {
+      await ImportJob.findByIdAndUpdate(job._id, { status: 'failed', totalRows, failedRows, finishedAt: new Date() });
+    } catch (updateError) {
+      console.error('Unable to mark failed upload job:', updateError);
+    }
     if (io) io.to(uploadId).emit('import-progress', { uploadId, progress: 100, rowsProcessed: totalRows, rowsFailed: failedRows, error: String(error) });
     res.status(500).json({ message: 'Upload processing failed', error: String(error) });
   } finally {

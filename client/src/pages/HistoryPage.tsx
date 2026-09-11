@@ -110,6 +110,13 @@ const HistoryPage = () => {
                     </button>
                     <button
                       type="button"
+                      onClick={() => navigate(`/preview?uploadId=${job.uploadId}`)}
+                      className="rounded-full border border-white/10 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-500/20"
+                    >
+                      Import
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => navigate(`/audit?uploadId=${job.uploadId}`)}
                       className="rounded-full border border-white/10 bg-sky-500/10 px-3 py-1 text-xs font-semibold text-sky-200 transition hover:bg-sky-500/20"
                     >

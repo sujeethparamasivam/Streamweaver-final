@@ -23,7 +23,7 @@ const cleanupDatabase = async () => {
     for (const collection of collections) {
       const col = db.collection(collection.name);
       const count = await col.countDocuments();
-      const stats = await db.collection(collection.name).stats();
+      const stats = await db.command({ collStats: collection.name });
       const sizeInMB = (stats.size / (1024 * 1024)).toFixed(2);
       
       console.log(`\n${collection.name}:`);
@@ -53,7 +53,7 @@ const cleanupDatabase = async () => {
     for (const collection of updatedCollections) {
       const col = db.collection(collection.name);
       const count = await col.countDocuments();
-      const stats = await db.collection(collection.name).stats();
+      const stats = await db.command({ collStats: collection.name });
       const sizeInMB = (stats.size / (1024 * 1024)).toFixed(2);
       
       console.log(`${collection.name}: ${count} docs, ${sizeInMB} MB`);

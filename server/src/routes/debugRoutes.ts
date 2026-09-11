@@ -39,7 +39,7 @@ router.get('/upload-rows', async (req: AuthedRequest, res: Response) => {
       filter.uploadId = uploadId;
     }
 
-    const rows = await UploadRow.find(filter).sort({ rowNumber: 1 }).limit(1000).lean();
+    const rows = await UploadRow.find(filter).sort({ rowNumber: 1 }).allowDiskUse(true).limit(1000).lean();
     const columns = Array.from(new Set(rows.flatMap((row) => Object.keys(row.data ?? {}))));
     res.json({ count: rows.length, rows, columns });
   } catch (error) {

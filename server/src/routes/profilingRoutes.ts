@@ -139,14 +139,14 @@ router.get('/', async (req: AuthedRequest, res: Response) => {
         { $match: rowFilter },
         { $group: { _id: `$data.${column}` } },
         { $group: { _id: null, uniqueCount: { $sum: 1 } } }
-      ]).allowDiskUse(true);
+      ]).option({ allowDiskUse: true });
       const uniqueValues = uniqueAgg[0]?.uniqueCount ?? 0;
 
       // numeric stats (min/max/avg) for numeric values only
       const numAgg = await UploadRow.aggregate([
         { $match: { ...rowFilter, [`data.${column}`]: { $type: 'number' } } },
         { $group: { _id: null, min: { $min: `$data.${column}` }, max: { $max: `$data.${column}` }, avg: { $avg: `$data.${column}` } } }
-      ]).allowDiskUse(true);
+      ]).option({ allowDiskUse: true });
       const numStats = numAgg[0] ?? {};
 
       // approximate median and IQR by sampling up to 1000 numeric values
