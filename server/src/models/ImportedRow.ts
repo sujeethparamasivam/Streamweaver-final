@@ -15,4 +15,6 @@ const importedRowSchema = new Schema<IImportedRow>(
   { timestamps: true }
 );
 
+importedRowSchema.index({ uploadId: 1, rowNumber: 1 });
+
 export default mongoose.model<IImportedRow>('ImportedRow', importedRowSchema);

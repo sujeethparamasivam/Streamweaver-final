@@ -19,4 +19,6 @@ const uploadRowSchema = new Schema<IUploadRow>(
   { timestamps: true }
 );
 
+uploadRowSchema.index({ uploadId: 1, rowNumber: 1 });
+
 export default mongoose.model<IUploadRow>('UploadRow', uploadRowSchema);

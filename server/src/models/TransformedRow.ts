@@ -15,4 +15,6 @@ const transformedRowSchema = new Schema<ITransformedRow>(
   { timestamps: true }
 );
 
+transformedRowSchema.index({ uploadId: 1, rowNumber: 1 });
+
 export default mongoose.model<ITransformedRow>('TransformedRow', transformedRowSchema);
