@@ -1,13 +1,13 @@
 import { io, Socket } from 'socket.io-client';
+import { BACKEND_URL } from './api';
 
 let socket: Socket | null = null;
 
 // A single shared socket for the whole app. Connects lazily on first use
-// and is proxied through Vite in dev (see vite.config.ts) to the API
-// server's Socket.IO endpoint.
+// and connects directly to the configured backend.
 export const getSocket = (): Socket => {
   if (!socket) {
-    socket = io({ transports: ['websocket', 'polling'] });
+    socket = io(BACKEND_URL, { transports: ['websocket', 'polling'] });
   }
   return socket;
 };

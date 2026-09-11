@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../services/api';
 
 type User = {
   id: string;
@@ -60,7 +61,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const response = await axios.post('/api/auth/login', { email, password });
+    const response = await axios.post(`${API_BASE_URL}/auth/login`, { email, password });
     const user = response.data.user;
     localStorage.setItem('streamweaver-token', response.data.token);
     localStorage.setItem('streamweaver-user', JSON.stringify(user));
@@ -69,7 +70,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const register = async (name: string, email: string, password: string) => {
-    const response = await axios.post('/api/auth/register', { name, email, password });
+    const response = await axios.post(`${API_BASE_URL}/auth/register`, { name, email, password });
     const user = response.data.user;
     localStorage.setItem('streamweaver-token', response.data.token);
     localStorage.setItem('streamweaver-user', JSON.stringify(user));
