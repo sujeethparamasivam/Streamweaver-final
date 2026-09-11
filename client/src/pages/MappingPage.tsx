@@ -327,7 +327,11 @@ const MappingPage = () => {
       );
       navigate(`/preview?uploadId=${uploadId}`);
     } catch (err: any) {
-      const errorMsg = err?.response?.data?.message || err?.message || 'Unable to run transformation. Please check your mapping and try again.';
+      const serverMessage = err?.response?.data?.message;
+      const serverDetail = err?.response?.data?.error;
+      const errorMsg = serverDetail && serverDetail !== serverMessage
+        ? `${serverMessage ?? 'Transformation failed'}: ${serverDetail}`
+        : serverMessage || err?.message || 'Unable to run transformation. Please check your mapping and try again.';
       console.error('Transform error:', err);
       setError(errorMsg);
     } finally {
